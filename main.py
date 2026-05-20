@@ -22,17 +22,16 @@ ES_CONTINUOUS = 0x80000000
 ES_DISPLAY_REQUIRED = 0x00000002
 ES_SYSTEM_REQUIRED = 0x00000001
 
-VK_SCROLL = 0x91
+VK_CAPITAL = 0x14
 VK_BACK = 0x08
 VK_RETURN = 0x0D
 VK_SHIFT = 0x10
-VK_CAPITAL = 0x14
 
 LETTER_KEYS = set(range(0x41, 0x5B))
 NUMBER_KEYS = set(range(0x30, 0x3A))
 
-SCROLL_LOCK_TRIGGER_COUNT = 3
-SCROLL_LOCK_TRIGGER_WINDOW = 2.0
+CAPS_LOCK_TRIGGER_COUNT = 3
+CAPS_LOCK_TRIGGER_WINDOW = 2.0
 
 
 class KBDLLHOOKSTRUCT(ctypes.Structure):
@@ -73,7 +72,7 @@ class SystemLocker:
         self._mouse_hook_proc = None
         self._msg_thread = None
 
-        self.scroll_lock_press_times = []
+        self.caps_lock_press_times = []
         self.unlock_mode = False
         self.on_unlock_trigger = None
 
@@ -130,22 +129,22 @@ class SystemLocker:
             try:
                 vk_code = lParam.contents.vkCode
 
-                if vk_code == VK_SCROLL and (wParam == WM_KEYDOWN or wParam == WM_SYSKEYDOWN):
+                if vk_code == VK_CAPITAL and (wParam == WM_KEYDOWN or wParam == WM_SYSKEYDOWN):
                     now = time.time()
-                    self.scroll_lock_press_times.append(now)
-                    self.scroll_lock_press_times = [
-                        t for t in self.scroll_lock_press_times
-                        if now - t < SCROLL_LOCK_TRIGGER_WINDOW
+                    self.caps_lock_press_times.append(now)
+                    self.caps_lock_press_times = [
+                        t for t in self.caps_lock_press_times
+                        if now - t < CAPS_LOCK_TRIGGER_WINDOW
                     ]
-                    if len(self.scroll_lock_press_times) >= SCROLL_LOCK_TRIGGER_COUNT:
-                        self.scroll_lock_press_times.clear()
+                    if len(self.caps_lock_press_times) >= CAPS_LOCK_TRIGGER_COUNT:
+                        self.caps_lock_press_times.clear()
                         self.unlock_mode = not self.unlock_mode
                         if self.on_unlock_trigger:
                             self.on_unlock_trigger(self.unlock_mode)
                     return 1
 
                 if self.unlock_mode:
-                    allowed = LETTER_KEYS | NUMBER_KEYS | {VK_BACK, VK_RETURN, VK_SHIFT, VK_CAPITAL}
+                    allowed = LETTER_KEYS | NUMBER_KEYS | {VK_BACK, VK_RETURN, VK_SHIFT}
                     if vk_code in allowed:
                         return user32.CallNextHookEx(
                             self.kb_hook_handle, nCode, wParam,
@@ -214,7 +213,7 @@ class SystemLocker:
         try:
             self.lock_active = True
             self.unlock_mode = False
-            self.scroll_lock_press_times.clear()
+            self.caps_lock_press_times.clear()
 
             self._enable_screen_always_on()
             self._disable_usb_storage()
@@ -334,7 +333,7 @@ class LockApp:
 
         hints = [
             "锁定后: 键盘/鼠标禁用，USB存储禁用，屏幕常亮",
-            "解锁: 连按3次ScrollLock → 输入密码 → Enter",
+            "解锁: 连按3次 CapsLock(大写锁定) → 输入密码 → Enter",
             "解锁模式下鼠标可用，密码错误自动关闭解锁模式",
             f"默认密码: {self.locker.unlock_password}"
         ]
@@ -353,7 +352,7 @@ class LockApp:
         else:
             self.unlock_frame.pack_forget()
             if self.locker.lock_active:
-                self.msg_label.config(text="已锁定! 连按3次 ScrollLock 解锁", fg="#16c79a")
+                self.msg_label.config(text="已锁定! 连按3次 CapsLock 解锁", fg="#16c79a")
 
     def lock(self):
         success = self.locker.start_lock()
@@ -364,7 +363,7 @@ class LockApp:
             self.root.lift()
             self.root.focus_force()
             self.msg_label.config(
-                text="已锁定! 连按3次 ScrollLock 解锁",
+                text="已锁定! 连按3次 CapsLock(大写锁定) 解锁",
                 fg="#16c79a"
             )
         else:
@@ -385,7 +384,7 @@ class LockApp:
             self.locker.cancel_unlock_mode()
             self.unlock_frame.pack_forget()
             self.password_entry.delete(0, 'end')
-            self.msg_label.config(text="密码错误! 连按3次 ScrollLock 重新解锁", fg="#e94560")
+            self.msg_label.config(text="密码错误! 连按3次 CapsLock 重新解锁", fg="#e94560")
 
     def on_close(self):
         if self.locker.lock_active:
