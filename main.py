@@ -8,7 +8,8 @@ import atexit
 import traceback
 import json
 import os
-from tkinter import Tk, Label, Entry, Button, Frame, messagebox
+from tkinter import messagebox
+import customtkinter as ctk
 
 user32 = ctypes.WinDLL('user32', use_last_error=True)
 kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
@@ -299,15 +300,27 @@ class SystemLocker:
 
 
 class LockApp:
+    BG = "#1c1c1e"
+    CARD_BG = "#2c2c2e"
+    ACCENT = "#0a84ff"
+    GREEN = "#30d158"
+    RED = "#ff453a"
+    TEXT = "#ffffff"
+    SUBTEXT = "#8e8e93"
+    BORDER = "#3a3a3c"
+
     def __init__(self, locker):
         self.locker = locker
-        self.root = Tk()
-        self.root.title("系统锁定工具")
-        self.root.geometry("500x480")
-        self.root.resizable(False, False)
-        self.root.configure(bg="#1a1a2e")
-
         self._last_unlock_mode = False
+
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("dark-blue")
+
+        self.root = ctk.CTk()
+        self.root.title("System Locker")
+        self.root.geometry("400x600")
+        self.root.resizable(False, False)
+        self.root.configure(fg_color=self.BG)
 
         self._build_ui()
 
@@ -317,107 +330,165 @@ class LockApp:
         self._poll_state()
 
     def _build_ui(self):
-        main_frame = Frame(self.root, bg="#1a1a2e")
-        main_frame.pack(fill="both", expand=True, padx=30, pady=20)
+        container = ctk.CTkFrame(self.root, fg_color=self.BG)
+        container.pack(fill="both", expand=True, padx=24, pady=24)
 
-        title = Label(main_frame, text="系统锁定工具", font=("Arial", 22, "bold"),
-                       bg="#1a1a2e", fg="#e94560")
-        title.pack(pady=(0, 10))
+        icon_label = ctk.CTkLabel(
+            container, text="🔒", font=ctk.CTkFont(size=48),
+            text_color=self.TEXT
+        )
+        icon_label.pack(pady=(16, 4))
 
-        self.status_label = Label(main_frame, text="当前状态: 未锁定",
-                                   font=("Arial", 14), bg="#1a1a2e", fg="#16c79a")
-        self.status_label.pack(pady=(0, 15))
+        ctk.CTkLabel(
+            container, text="System Locker",
+            font=ctk.CTkFont(family="Segoe UI", size=24, weight="bold"),
+            text_color=self.TEXT
+        ).pack(pady=(0, 4))
 
-        self.lock_button = Button(main_frame, text="开始锁定", command=self.lock,
-                                   width=20, height=2, bg="#e94560", fg="white",
-                                   font=("Arial", 13, "bold"), borderwidth=0,
-                                   activebackground="#c81e45", activeforeground="white")
-        self.lock_button.pack(pady=8)
+        self.status_label = ctk.CTkLabel(
+            container, text="未锁定",
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+            text_color=self.GREEN
+        )
+        self.status_label.pack(pady=(0, 20))
 
-        self.msg_label = Label(main_frame, text="", font=("Arial", 11),
-                                bg="#1a1a2e", fg="#16c79a", wraplength=420)
-        self.msg_label.pack(pady=5)
+        self.lock_button = ctk.CTkButton(
+            container, text="锁定系统", command=self.lock,
+            width=260, height=48, corner_radius=24,
+            fg_color=self.ACCENT, hover_color="#0070e0",
+            font=ctk.CTkFont(family="Segoe UI", size=15, weight="bold")
+        )
+        self.lock_button.pack(pady=(0, 12))
 
-        self.unlock_frame = Frame(main_frame, bg="#1a1a2e")
+        self.msg_label = ctk.CTkLabel(
+            container, text="",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=self.GREEN, wraplength=340
+        )
+        self.msg_label.pack(pady=(0, 12))
 
-        self.unlock_hint = Label(self.unlock_frame, text="请输入密码后按 Enter 解锁",
-                                  font=("Arial", 11), bg="#1a1a2e", fg="#16c79a")
-        self.unlock_hint.pack(pady=(0, 8))
+        self.unlock_frame = ctk.CTkFrame(container, fg_color="transparent")
 
-        self.password_entry = Entry(self.unlock_frame, show="*", width=30,
-                                     font=("Arial", 16), justify="center",
-                                     bg="#16213e", fg="white", insertbackground="white")
-        self.password_entry.pack(pady=(0, 8))
+        ctk.CTkLabel(
+            self.unlock_frame, text="输入密码解锁",
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+            text_color=self.SUBTEXT
+        ).pack(pady=(0, 10))
 
-        self.unlock_button = Button(self.unlock_frame, text="解锁 (Enter)",
-                                     command=self.unlock,
-                                     width=20, height=2, bg="#16c79a", fg="white",
-                                     font=("Arial", 13, "bold"), borderwidth=0,
-                                     activebackground="#0f9b7a", activeforeground="white")
-        self.unlock_button.pack(pady=5)
+        self.password_entry = ctk.CTkEntry(
+            self.unlock_frame, show="•", width=260, height=44,
+            corner_radius=12, placeholder_text="密码",
+            fg_color=self.CARD_BG, border_color=self.BORDER,
+            text_color=self.TEXT,
+            font=ctk.CTkFont(family="Segoe UI", size=15)
+        )
+        self.password_entry.pack(pady=(0, 12))
+
+        self.unlock_button = ctk.CTkButton(
+            self.unlock_frame, text="解锁", command=self.unlock,
+            width=260, height=44, corner_radius=22,
+            fg_color=self.GREEN, hover_color="#28b84c",
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold")
+        )
+        self.unlock_button.pack(pady=(0, 4))
 
         self.password_entry.bind("<Return>", lambda e: self.unlock())
 
-        pw_frame = Frame(main_frame, bg="#1a1a2e")
-        pw_frame.pack(pady=8)
+        self.change_pw_button = ctk.CTkButton(
+            container, text="修改密码", command=self._open_change_password,
+            width=120, height=34, corner_radius=17,
+            fg_color=self.CARD_BG, hover_color="#3a3a3c",
+            text_color=self.SUBTEXT, border_width=1, border_color=self.BORDER,
+            font=ctk.CTkFont(family="Segoe UI", size=12)
+        )
+        self.change_pw_button.pack(pady=(4, 16))
 
-        self.change_pw_button = Button(pw_frame, text="修改密码", command=self._open_change_password,
-                                        width=12, height=1, bg="#0f3460", fg="white",
-                                        font=("Arial", 10), borderwidth=0,
-                                        activebackground="#16213e", activeforeground="white")
-        self.change_pw_button.pack()
-
-        hint_frame = Frame(main_frame, bg="#1a1a2e")
-        hint_frame.pack(side="bottom", fill="x", pady=(10, 0))
+        hint_card = ctk.CTkFrame(container, fg_color=self.CARD_BG, corner_radius=12)
+        hint_card.pack(fill="x", side="bottom", pady=(0, 4))
 
         is_first_run = not os.path.exists(CONFIG_FILE)
 
         hints = [
             "锁定后: 键盘/鼠标禁用，USB存储禁用，屏幕常亮",
-            "解锁: 连按3次 CapsLock(大写锁定) → 输入密码 → Enter",
-            "解锁模式下鼠标可用，密码错误自动关闭解锁模式",
+            "解锁: 连按3次 CapsLock → 输入密码 → Enter",
+            "解锁模式下鼠标可用，密码错误自动关闭",
         ]
         if is_first_run:
-            hints.append(f"首次使用，初始密码: {self.locker.unlock_password}，请及时修改")
+            hints.append(f"初始密码: {self.locker.unlock_password}，请及时修改")
+
         for h in hints:
-            Label(hint_frame, text=h, font=("Arial", 9), bg="#1a1a2e", fg="#555").pack(anchor="w")
+            ctk.CTkLabel(
+                hint_card, text=h,
+                font=ctk.CTkFont(family="Segoe UI", size=11),
+                text_color=self.SUBTEXT, anchor="w"
+            ).pack(fill="x", padx=14, pady=2)
+
+        ctk.CTkLabel(hint_card, text="").pack(pady=2)
 
     def _open_change_password(self):
         if self.locker.lock_active:
             return
 
-        win = Tk()
+        win = ctk.CTkToplevel(self.root)
         win.title("修改密码")
-        win.geometry("380x280")
+        win.geometry("360x380")
         win.resizable(False, False)
-        win.configure(bg="#1a1a2e")
+        win.configure(fg_color=self.BG)
         win.grab_set()
 
-        Label(win, text="修改密码", font=("Arial", 16, "bold"),
-               bg="#1a1a2e", fg="#e94560").pack(pady=(20, 15))
+        ctk.CTkLabel(
+            win, text="修改密码",
+            font=ctk.CTkFont(family="Segoe UI", size=20, weight="bold"),
+            text_color=self.TEXT
+        ).pack(pady=(24, 20))
 
-        frame = Frame(win, bg="#1a1a2e")
-        frame.pack(padx=30, fill="x")
+        form = ctk.CTkFrame(win, fg_color="transparent")
+        form.pack(padx=32, fill="x")
 
-        Label(frame, text="当前密码:", font=("Arial", 11),
-               bg="#1a1a2e", fg="white").pack(anchor="w")
-        old_entry = Entry(frame, show="*", width=30, font=("Arial", 13),
-                           bg="#16213e", fg="white", insertbackground="white")
-        old_entry.pack(pady=(0, 10))
+        ctk.CTkLabel(
+            form, text="当前密码",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=self.SUBTEXT, anchor="w"
+        ).pack(fill="x", pady=(0, 4))
+        old_entry = ctk.CTkEntry(
+            form, show="•", height=40, corner_radius=10,
+            fg_color=self.CARD_BG, border_color=self.BORDER,
+            text_color=self.TEXT,
+            font=ctk.CTkFont(family="Segoe UI", size=14)
+        )
+        old_entry.pack(fill="x", pady=(0, 12))
 
-        Label(frame, text="新密码:", font=("Arial", 11),
-               bg="#1a1a2e", fg="white").pack(anchor="w")
-        new_entry = Entry(frame, show="*", width=30, font=("Arial", 13),
-                           bg="#16213e", fg="white", insertbackground="white")
-        new_entry.pack(pady=(0, 10))
+        ctk.CTkLabel(
+            form, text="新密码",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=self.SUBTEXT, anchor="w"
+        ).pack(fill="x", pady=(0, 4))
+        new_entry = ctk.CTkEntry(
+            form, show="•", height=40, corner_radius=10,
+            fg_color=self.CARD_BG, border_color=self.BORDER,
+            text_color=self.TEXT,
+            font=ctk.CTkFont(family="Segoe UI", size=14)
+        )
+        new_entry.pack(fill="x", pady=(0, 12))
 
-        Label(frame, text="确认新密码:", font=("Arial", 11),
-               bg="#1a1a2e", fg="white").pack(anchor="w")
-        confirm_entry = Entry(frame, show="*", width=30, font=("Arial", 13),
-                               bg="#16213e", fg="white", insertbackground="white")
-        confirm_entry.pack(pady=(0, 15))
+        ctk.CTkLabel(
+            form, text="确认新密码",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=self.SUBTEXT, anchor="w"
+        ).pack(fill="x", pady=(0, 4))
+        confirm_entry = ctk.CTkEntry(
+            form, show="•", height=40, corner_radius=10,
+            fg_color=self.CARD_BG, border_color=self.BORDER,
+            text_color=self.TEXT,
+            font=ctk.CTkFont(family="Segoe UI", size=14)
+        )
+        confirm_entry.pack(fill="x", pady=(0, 16))
 
-        msg_label = Label(win, text="", font=("Arial", 10), bg="#1a1a2e", fg="#e94560")
+        msg_label = ctk.CTkLabel(
+            win, text="",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=self.RED
+        )
         msg_label.pack()
 
         def do_change():
@@ -426,24 +497,27 @@ class LockApp:
             confirm = confirm_entry.get()
 
             if old != self.locker.unlock_password:
-                msg_label.config(text="当前密码错误", fg="#e94560")
+                msg_label.configure(text="当前密码错误", text_color=self.RED)
                 return
 
             if not new:
-                msg_label.config(text="新密码不能为空", fg="#e94560")
+                msg_label.configure(text="新密码不能为空", text_color=self.RED)
                 return
 
             if new != confirm:
-                msg_label.config(text="两次输入的新密码不一致", fg="#e94560")
+                msg_label.configure(text="两次输入的新密码不一致", text_color=self.RED)
                 return
 
             self.locker.set_password(new)
             messagebox.showinfo("成功", "密码已修改!", parent=win)
             win.destroy()
 
-        Button(win, text="确认修改", command=do_change,
-               width=15, height=1, bg="#16c79a", fg="white",
-               font=("Arial", 11, "bold"), borderwidth=0).pack(pady=5)
+        ctk.CTkButton(
+            win, text="确认修改", command=do_change,
+            width=200, height=42, corner_radius=21,
+            fg_color=self.ACCENT, hover_color="#0070e0",
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold")
+        ).pack(pady=8)
 
     def _poll_state(self):
         try:
@@ -453,56 +527,59 @@ class LockApp:
                 if new_mode != self._last_unlock_mode:
                     self._last_unlock_mode = new_mode
                     self._update_unlock_ui(new_mode)
-        except:
+        except Exception:
             pass
         self.root.after(100, self._poll_state)
 
     def _update_unlock_ui(self, unlock_mode):
         if unlock_mode:
-            self.unlock_frame.pack(pady=8)
+            self.unlock_frame.pack(after=self.msg_label, pady=8)
             self.password_entry.delete(0, 'end')
-            self.password_entry.focus_set()
-            self.msg_label.config(text="解锁模式已开启 - 请输入密码", fg="#16c79a")
+            try:
+                self.password_entry._entry.focus_set()
+            except Exception:
+                self.password_entry.focus_set()
+            self.msg_label.configure(text="解锁模式已开启 — 请输入密码", text_color=self.GREEN)
         else:
             self.unlock_frame.pack_forget()
             if self.locker.lock_active:
-                self.msg_label.config(text="已锁定! 连按3次 CapsLock 解锁", fg="#16c79a")
+                self.msg_label.configure(text="已锁定 — 连按3次 CapsLock 解锁", text_color=self.GREEN)
 
     def lock(self):
         success = self.locker.start_lock()
         if success:
-            self.status_label.config(text="当前状态: 已锁定", fg="#e94560")
-            self.lock_button.config(state="disabled")
-            self.change_pw_button.config(state="disabled")
+            self.status_label.configure(text="已锁定", text_color=self.RED)
+            self.lock_button.configure(state="disabled", fg_color="#555555")
+            self.change_pw_button.configure(state="disabled")
             self.root.attributes('-topmost', True)
             self.root.lift()
             self.root.focus_force()
-            self.msg_label.config(
-                text="已锁定! 连按3次 CapsLock(大写锁定) 解锁",
-                fg="#16c79a"
+            self.msg_label.configure(
+                text="已锁定 — 连按3次 CapsLock 解锁",
+                text_color=self.GREEN
             )
         else:
-            self.msg_label.config(text="锁定失败!", fg="#e94560")
+            self.msg_label.configure(text="锁定失败!", text_color=self.RED)
 
     def unlock(self):
         password = self.password_entry.get()
         if password == self.locker.unlock_password:
             if self.locker.stop_lock():
-                self.status_label.config(text="当前状态: 未锁定", fg="#16c79a")
-                self.lock_button.config(state="normal")
-                self.change_pw_button.config(state="normal")
+                self.status_label.configure(text="未锁定", text_color=self.GREEN)
+                self.lock_button.configure(state="normal", fg_color=self.ACCENT)
+                self.change_pw_button.configure(state="normal")
                 self.root.attributes('-topmost', False)
                 self.unlock_frame.pack_forget()
                 self._last_unlock_mode = False
-                self.msg_label.config(text="已成功解锁", fg="#16c79a")
+                self.msg_label.configure(text="已成功解锁", text_color=self.GREEN)
             else:
-                self.msg_label.config(text="解锁失败，请重试", fg="#e94560")
+                self.msg_label.configure(text="解锁失败，请重试", text_color=self.RED)
         else:
             self.locker.cancel_unlock_mode()
             self.unlock_frame.pack_forget()
             self._last_unlock_mode = False
             self.password_entry.delete(0, 'end')
-            self.msg_label.config(text="密码错误! 连按3次 CapsLock 重新解锁", fg="#e94560")
+            self.msg_label.configure(text="密码错误 — 连按3次 CapsLock 重新解锁", text_color=self.RED)
 
     def on_close(self):
         if self.locker.lock_active:
