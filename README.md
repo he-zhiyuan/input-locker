@@ -51,7 +51,7 @@ python main.py
 ## 项目结构
 
 ```
-keyboard-lock/
+SystemLocker/
 ├── main.py           # 主程序
 ├── build.ps1         # PowerShell 打包脚本
 ├── requirements.txt  # Python 依赖
