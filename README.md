@@ -1,6 +1,6 @@
-# SystemLocker - Windows 系统锁定工具
+# system-locker
 
-适用于笔记本电脑的展示/防误触锁定工具。锁定后键盘、鼠标禁用，USB存储禁用，屏幕保持常亮，通过 CapsLock+密码解锁。
+Windows 系统锁定工具。适用于笔记本电脑的展示/防误触场景，锁定后键盘、鼠标禁用，USB存储禁用，屏幕保持常亮，通过 CapsLock+密码解锁。
 
 ## 功能
 
@@ -51,7 +51,7 @@ python main.py
 ## 项目结构
 
 ```
-SystemLocker/
+system-locker/
 ├── main.py           # 主程序
 ├── build.ps1         # PowerShell 打包脚本
 ├── requirements.txt  # Python 依赖
