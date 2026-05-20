@@ -25,7 +25,7 @@ Write-Host "Installing PyInstaller..." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Building..." -ForegroundColor Yellow
 
-& $pythonPath -m PyInstaller --onefile --windowed --uac-admin --name="SystemLocker" main.py
+& $pythonPath -m PyInstaller --onefile --windowed --uac-admin --name="SystemLocker" main.pyw
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""

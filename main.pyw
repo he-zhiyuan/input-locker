@@ -528,17 +528,24 @@ class LockApp:
 
     def _update_unlock_ui(self, unlock_mode):
         if unlock_mode:
+            self.root.after(50, self._restore_and_focus)
             self.unlock_frame.pack(after=self.msg_label, pady=8)
             self.password_entry.delete(0, 'end')
-            try:
-                self.password_entry._entry.focus_set()
-            except Exception:
-                self.password_entry.focus_set()
             self.msg_label.configure(text="解锁模式已开启 — 请输入密码", text_color=self.GREEN)
         else:
             self.unlock_frame.pack_forget()
             if self.locker.lock_active:
                 self.msg_label.configure(text="已锁定 — 连按3次 CapsLock 解锁", text_color=self.GREEN)
+
+    def _restore_and_focus(self):
+        self.root.attributes('-topmost', True)
+        self.root.state('normal')
+        self.root.lift()
+        self.root.focus_force()
+        try:
+            self.password_entry._entry.focus_set()
+        except Exception:
+            self.password_entry.focus_set()
 
     def lock(self):
         success = self.locker.start_lock()
@@ -546,13 +553,11 @@ class LockApp:
             self.status_label.configure(text="已锁定", text_color=self.RED)
             self.lock_button.configure(state="disabled", fg_color="#555555")
             self.change_pw_button.configure(state="disabled")
-            self.root.attributes('-topmost', True)
-            self.root.lift()
-            self.root.focus_force()
             self.msg_label.configure(
                 text="已锁定 — 连按3次 CapsLock 解锁",
                 text_color=self.GREEN
             )
+            self.root.after(200, lambda: self.root.iconify())
         else:
             self.msg_label.configure(text="锁定失败!", text_color=self.RED)
 
@@ -587,8 +592,11 @@ class LockApp:
 
 def main():
     if not ctypes.windll.shell32.IsUserAnAdmin():
+        executable = sys.executable
+        if executable.endswith("python.exe"):
+            executable = executable[:-10] + "pythonw.exe"
         result = ctypes.windll.shell32.ShellExecuteW(
-            None, "runas", sys.executable, " ".join(sys.argv), None, 1
+            None, "runas", executable, " ".join(sys.argv), None, 0
         )
         if result <= 32:
             messagebox.showerror("错误", "需要管理员权限!\n\n请右键选择'以管理员身份运行'")
