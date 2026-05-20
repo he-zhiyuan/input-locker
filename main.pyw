@@ -426,7 +426,7 @@ class LockApp:
 
         win = ctk.CTkToplevel(self.root)
         win.title("修改密码")
-        win.geometry("360x380")
+        win.geometry("360x420")
         win.resizable(False, False)
         win.configure(fg_color=self.BG)
         win.grab_set()
