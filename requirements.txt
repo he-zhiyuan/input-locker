@@ -1,0 +1,4 @@
+pywin32>=306
+pycaw>=2022.0.2
+pystray>=0.19.3
+Pillow>=10.0.0
