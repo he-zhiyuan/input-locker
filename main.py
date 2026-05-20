@@ -370,11 +370,15 @@ class LockApp:
         hint_frame = Frame(main_frame, bg="#1a1a2e")
         hint_frame.pack(side="bottom", fill="x", pady=(10, 0))
 
+        is_first_run = not os.path.exists(CONFIG_FILE)
+
         hints = [
             "锁定后: 键盘/鼠标禁用，USB存储禁用，屏幕常亮",
             "解锁: 连按3次 CapsLock(大写锁定) → 输入密码 → Enter",
             "解锁模式下鼠标可用，密码错误自动关闭解锁模式",
         ]
+        if is_first_run:
+            hints.append(f"首次使用，初始密码: {self.locker.unlock_password}，请及时修改")
         for h in hints:
             Label(hint_frame, text=h, font=("Arial", 9), bg="#1a1a2e", fg="#555").pack(anchor="w")
 
