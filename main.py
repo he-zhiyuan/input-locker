@@ -190,11 +190,6 @@ class SystemLocker:
 
     def _mouse_hook_callback(self, nCode, wParam, lParam):
         if nCode >= 0 and self.lock_active:
-            if self.unlock_mode:
-                return user32.CallNextHookEx(
-                    self.mouse_hook_handle, nCode, wParam,
-                    ctypes.cast(lParam, ctypes.POINTER(ctypes.c_void_p))
-                )
             return 1
 
         return user32.CallNextHookEx(
@@ -411,7 +406,7 @@ class LockApp:
         hints = [
             "锁定后: 键盘/鼠标禁用，USB存储禁用，屏幕常亮",
             "解锁: 连按3次 CapsLock → 输入密码 → Enter",
-            "解锁模式下鼠标可用，密码错误自动关闭",
+            "解锁模式下密码错误自动关闭",
         ]
         if is_first_run:
             hints.append(f"初始密码: {self.locker.unlock_password}，请及时修改")
