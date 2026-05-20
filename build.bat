@@ -1,12 +1,17 @@
 @echo off
-echo 正在安装PyInstaller...
+echo === SystemLocker Build ===
+echo.
+echo Installing PyInstaller...
 pip install pyinstaller
-
 echo.
-echo 正在打包成可执行文件...
-pyinstaller --onefile --windowed --icon=NONE --name="系统锁定工具" main.py
-
+echo Building...
+pyinstaller --onefile --windowed --uac-admin --name="SystemLocker" main.py
 echo.
-echo 打包完成！
-echo 可执行文件位于 dist 文件夹中
+if exist "dist\SystemLocker.exe" (
+    echo [OK] Build successful!
+    echo Output: dist\SystemLocker.exe
+) else (
+    echo [FAIL] Build failed!
+)
+echo.
 pause
