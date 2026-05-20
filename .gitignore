@@ -38,6 +38,9 @@ venv.bak/
 .DS_Store
 Thumbs.db
 
+# Config (contains user password)
+config.json
+
 # PyInstaller
 *.spec
 *.exe

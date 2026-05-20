@@ -6,7 +6,9 @@ import threading
 import time
 import atexit
 import traceback
-from tkinter import Tk, Label, Entry, Button, Frame
+import json
+import os
+from tkinter import Tk, Label, Entry, Button, Frame, messagebox
 
 user32 = ctypes.WinDLL('user32', use_last_error=True)
 kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
@@ -33,6 +35,25 @@ NUMBER_KEYS = set(range(0x30, 0x3A))
 
 CAPS_LOCK_TRIGGER_COUNT = 3
 CAPS_LOCK_TRIGGER_WINDOW = 2.0
+
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "config.json")
+DEFAULT_PASSWORD = "123456"
+
+
+def load_config():
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {"password": DEFAULT_PASSWORD}
+
+
+def save_config(config):
+    try:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+    except:
+        pass
 
 
 class KBDLLHOOKSTRUCT(ctypes.Structure):
@@ -67,7 +88,7 @@ class SystemLocker:
         self.kb_hook_handle = None
         self.mouse_hook_handle = None
         self.lock_active = False
-        self.unlock_password = "123456"
+        self.unlock_password = load_config().get("password", DEFAULT_PASSWORD)
 
         self._kb_hook_proc = None
         self._mouse_hook_proc = None
@@ -79,6 +100,10 @@ class SystemLocker:
 
         self._original_screensaver_active = None
         self._original_screensaver_timeout = None
+
+    def set_password(self, new_password):
+        self.unlock_password = new_password
+        save_config({"password": new_password})
 
     def _get_screensaver_settings(self):
         try:
@@ -278,7 +303,7 @@ class LockApp:
         self.locker = locker
         self.root = Tk()
         self.root.title("系统锁定工具")
-        self.root.geometry("500x420")
+        self.root.geometry("500x480")
         self.root.resizable(False, False)
         self.root.configure(bg="#1a1a2e")
 
@@ -333,6 +358,15 @@ class LockApp:
 
         self.password_entry.bind("<Return>", lambda e: self.unlock())
 
+        pw_frame = Frame(main_frame, bg="#1a1a2e")
+        pw_frame.pack(pady=8)
+
+        self.change_pw_button = Button(pw_frame, text="修改密码", command=self._open_change_password,
+                                        width=12, height=1, bg="#0f3460", fg="white",
+                                        font=("Arial", 10), borderwidth=0,
+                                        activebackground="#16213e", activeforeground="white")
+        self.change_pw_button.pack()
+
         hint_frame = Frame(main_frame, bg="#1a1a2e")
         hint_frame.pack(side="bottom", fill="x", pady=(10, 0))
 
@@ -340,10 +374,72 @@ class LockApp:
             "锁定后: 键盘/鼠标禁用，USB存储禁用，屏幕常亮",
             "解锁: 连按3次 CapsLock(大写锁定) → 输入密码 → Enter",
             "解锁模式下鼠标可用，密码错误自动关闭解锁模式",
-            f"默认密码: {self.locker.unlock_password}"
         ]
         for h in hints:
             Label(hint_frame, text=h, font=("Arial", 9), bg="#1a1a2e", fg="#555").pack(anchor="w")
+
+    def _open_change_password(self):
+        if self.locker.lock_active:
+            return
+
+        win = Tk()
+        win.title("修改密码")
+        win.geometry("380x280")
+        win.resizable(False, False)
+        win.configure(bg="#1a1a2e")
+        win.grab_set()
+
+        Label(win, text="修改密码", font=("Arial", 16, "bold"),
+               bg="#1a1a2e", fg="#e94560").pack(pady=(20, 15))
+
+        frame = Frame(win, bg="#1a1a2e")
+        frame.pack(padx=30, fill="x")
+
+        Label(frame, text="当前密码:", font=("Arial", 11),
+               bg="#1a1a2e", fg="white").pack(anchor="w")
+        old_entry = Entry(frame, show="*", width=30, font=("Arial", 13),
+                           bg="#16213e", fg="white", insertbackground="white")
+        old_entry.pack(pady=(0, 10))
+
+        Label(frame, text="新密码:", font=("Arial", 11),
+               bg="#1a1a2e", fg="white").pack(anchor="w")
+        new_entry = Entry(frame, show="*", width=30, font=("Arial", 13),
+                           bg="#16213e", fg="white", insertbackground="white")
+        new_entry.pack(pady=(0, 10))
+
+        Label(frame, text="确认新密码:", font=("Arial", 11),
+               bg="#1a1a2e", fg="white").pack(anchor="w")
+        confirm_entry = Entry(frame, show="*", width=30, font=("Arial", 13),
+                               bg="#16213e", fg="white", insertbackground="white")
+        confirm_entry.pack(pady=(0, 15))
+
+        msg_label = Label(win, text="", font=("Arial", 10), bg="#1a1a2e", fg="#e94560")
+        msg_label.pack()
+
+        def do_change():
+            old = old_entry.get()
+            new = new_entry.get()
+            confirm = confirm_entry.get()
+
+            if old != self.locker.unlock_password:
+                msg_label.config(text="当前密码错误", fg="#e94560")
+                return
+
+            if not new:
+                msg_label.config(text="新密码不能为空", fg="#e94560")
+                return
+
+            if new != confirm:
+                msg_label.config(text="两次输入的新密码不一致", fg="#e94560")
+                return
+
+            self.locker.set_password(new)
+            messagebox.showinfo("成功", "密码已修改!", parent=win)
+            win.destroy()
+
+        Button(win, text="确认修改", command=do_change,
+               width=15, height=1, bg="#16c79a", fg="white",
+               font=("Arial", 11, "bold"), borderwidth=0).pack(pady=5)
 
     def _poll_state(self):
         try:
@@ -373,6 +469,7 @@ class LockApp:
         if success:
             self.status_label.config(text="当前状态: 已锁定", fg="#e94560")
             self.lock_button.config(state="disabled")
+            self.change_pw_button.config(state="disabled")
             self.root.attributes('-topmost', True)
             self.root.lift()
             self.root.focus_force()
@@ -389,6 +486,7 @@ class LockApp:
             if self.locker.stop_lock():
                 self.status_label.config(text="当前状态: 未锁定", fg="#16c79a")
                 self.lock_button.config(state="normal")
+                self.change_pw_button.config(state="normal")
                 self.root.attributes('-topmost', False)
                 self.unlock_frame.pack_forget()
                 self._last_unlock_mode = False
@@ -417,7 +515,6 @@ def main():
             None, "runas", sys.executable, " ".join(sys.argv), None, 1
         )
         if result <= 32:
-            from tkinter import messagebox
             messagebox.showerror("错误", "需要管理员权限!\n\n请右键选择'以管理员身份运行'")
         sys.exit(0)
 
