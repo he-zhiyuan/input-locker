@@ -247,8 +247,12 @@ class SystemLocker:
         except:
             return False
 
+    def cancel_unlock_mode(self):
+        self.unlock_mode = False
+
     def emergency_restore(self):
         self.lock_active = False
+        self.unlock_mode = False
         try:
             self.remove_keyboard_hook()
         except:
@@ -331,7 +335,7 @@ class LockApp:
         hints = [
             "锁定后: 键盘/鼠标禁用，USB存储禁用，屏幕常亮",
             "解锁: 连按3次ScrollLock → 输入密码 → Enter",
-            "解锁模式下鼠标可用",
+            "解锁模式下鼠标可用，密码错误自动关闭解锁模式",
             f"默认密码: {self.locker.unlock_password}"
         ]
         for h in hints:
@@ -348,7 +352,8 @@ class LockApp:
             self.msg_label.config(text="解锁模式已开启 - 请输入密码", fg="#16c79a")
         else:
             self.unlock_frame.pack_forget()
-            self.msg_label.config(text="解锁模式已关闭", fg="#e94560")
+            if self.locker.lock_active:
+                self.msg_label.config(text="已锁定! 连按3次 ScrollLock 解锁", fg="#16c79a")
 
     def lock(self):
         success = self.locker.start_lock()
@@ -377,8 +382,10 @@ class LockApp:
             else:
                 self.msg_label.config(text="解锁失败，请重试", fg="#e94560")
         else:
+            self.locker.cancel_unlock_mode()
+            self.unlock_frame.pack_forget()
             self.password_entry.delete(0, 'end')
-            self.msg_label.config(text="密码错误!", fg="#e94560")
+            self.msg_label.config(text="密码错误! 连按3次 ScrollLock 重新解锁", fg="#e94560")
 
     def on_close(self):
         if self.locker.lock_active:
