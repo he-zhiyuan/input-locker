@@ -295,20 +295,20 @@ class SystemLocker:
 
 
 class LockApp:
-    BG = "#1c1c1e"
-    CARD_BG = "#2c2c2e"
-    ACCENT = "#0a84ff"
-    GREEN = "#30d158"
-    RED = "#ff453a"
-    TEXT = "#ffffff"
+    BG = "#f2f2f7"
+    CARD_BG = "#ffffff"
+    ACCENT = "#007aff"
+    GREEN = "#34c759"
+    RED = "#ff3b30"
+    TEXT = "#1c1c1e"
     SUBTEXT = "#8e8e93"
-    BORDER = "#3a3a3c"
+    BORDER = "#d1d1d6"
 
     def __init__(self, locker):
         self.locker = locker
         self._last_unlock_mode = False
 
-        ctk.set_appearance_mode("dark")
+        ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("dark-blue")
 
         self.root = ctk.CTk()
@@ -392,14 +392,14 @@ class LockApp:
         self.change_pw_button = ctk.CTkButton(
             container, text="修改密码", command=self._open_change_password,
             width=120, height=34, corner_radius=17,
-            fg_color=self.CARD_BG, hover_color="#3a3a3c",
+            fg_color=self.CARD_BG, hover_color="#e5e5ea",
             text_color=self.SUBTEXT, border_width=1, border_color=self.BORDER,
             font=ctk.CTkFont(family="Segoe UI", size=12)
         )
-        self.change_pw_button.pack(pady=(4, 16))
+        self.change_pw_button.pack(pady=(12, 4))
 
         hint_card = ctk.CTkFrame(container, fg_color=self.CARD_BG, corner_radius=12)
-        hint_card.pack(fill="x", side="bottom", pady=(0, 4))
+        hint_card.pack(fill="x", pady=(0, 4))
 
         is_first_run = not os.path.exists(CONFIG_FILE)
 
@@ -551,7 +551,7 @@ class LockApp:
         success = self.locker.start_lock()
         if success:
             self.status_label.configure(text="已锁定", text_color=self.RED)
-            self.lock_button.configure(state="disabled", fg_color="#555555")
+            self.lock_button.configure(state="disabled", fg_color="#c7c7cc")
             self.change_pw_button.configure(state="disabled")
             self.msg_label.configure(
                 text="已锁定 — 连按3次 CapsLock 解锁",
