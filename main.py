@@ -5,6 +5,7 @@ import winreg
 import threading
 import time
 import atexit
+import traceback
 from tkinter import Tk, Label, Entry, Button, Frame
 
 user32 = ctypes.WinDLL('user32', use_last_error=True)
@@ -74,7 +75,7 @@ class SystemLocker:
 
         self.caps_lock_press_times = []
         self.unlock_mode = False
-        self.on_unlock_trigger = None
+        self._unlock_mode_changed = False
 
         self._original_screensaver_active = None
         self._original_screensaver_timeout = None
@@ -139,8 +140,7 @@ class SystemLocker:
                     if len(self.caps_lock_press_times) >= CAPS_LOCK_TRIGGER_COUNT:
                         self.caps_lock_press_times.clear()
                         self.unlock_mode = not self.unlock_mode
-                        if self.on_unlock_trigger:
-                            self.on_unlock_trigger(self.unlock_mode)
+                        self._unlock_mode_changed = True
                     return 1
 
                 if self.unlock_mode:
@@ -213,6 +213,7 @@ class SystemLocker:
         try:
             self.lock_active = True
             self.unlock_mode = False
+            self._unlock_mode_changed = False
             self.caps_lock_press_times.clear()
 
             self._enable_screen_always_on()
@@ -223,7 +224,7 @@ class SystemLocker:
             self._msg_thread.start()
 
             return True
-        except Exception as e:
+        except Exception:
             self.lock_active = False
             self._remove_mouse_hook()
             self.remove_keyboard_hook()
@@ -235,6 +236,7 @@ class SystemLocker:
         try:
             self.lock_active = False
             self.unlock_mode = False
+            self._unlock_mode_changed = False
             time.sleep(0.2)
 
             self.remove_keyboard_hook()
@@ -248,6 +250,7 @@ class SystemLocker:
 
     def cancel_unlock_mode(self):
         self.unlock_mode = False
+        self._unlock_mode_changed = True
 
     def emergency_restore(self):
         self.lock_active = False
@@ -279,12 +282,14 @@ class LockApp:
         self.root.resizable(False, False)
         self.root.configure(bg="#1a1a2e")
 
-        self.locker.on_unlock_trigger = self._on_unlock_trigger
+        self._last_unlock_mode = False
 
         self._build_ui()
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.bind("<Alt-F4>", lambda e: "break")
+
+        self._poll_state()
 
     def _build_ui(self):
         main_frame = Frame(self.root, bg="#1a1a2e")
@@ -340,8 +345,17 @@ class LockApp:
         for h in hints:
             Label(hint_frame, text=h, font=("Arial", 9), bg="#1a1a2e", fg="#555").pack(anchor="w")
 
-    def _on_unlock_trigger(self, unlock_mode):
-        self.root.after(0, self._update_unlock_ui, unlock_mode)
+    def _poll_state(self):
+        try:
+            if self.locker._unlock_mode_changed:
+                self.locker._unlock_mode_changed = False
+                new_mode = self.locker.unlock_mode
+                if new_mode != self._last_unlock_mode:
+                    self._last_unlock_mode = new_mode
+                    self._update_unlock_ui(new_mode)
+        except:
+            pass
+        self.root.after(100, self._poll_state)
 
     def _update_unlock_ui(self, unlock_mode):
         if unlock_mode:
@@ -377,12 +391,14 @@ class LockApp:
                 self.lock_button.config(state="normal")
                 self.root.attributes('-topmost', False)
                 self.unlock_frame.pack_forget()
+                self._last_unlock_mode = False
                 self.msg_label.config(text="已成功解锁", fg="#16c79a")
             else:
                 self.msg_label.config(text="解锁失败，请重试", fg="#e94560")
         else:
             self.locker.cancel_unlock_mode()
             self.unlock_frame.pack_forget()
+            self._last_unlock_mode = False
             self.password_entry.delete(0, 'end')
             self.msg_label.config(text="密码错误! 连按3次 CapsLock 重新解锁", fg="#e94560")
 
@@ -408,7 +424,12 @@ def main():
     locker = SystemLocker()
     atexit.register(locker.emergency_restore)
     app = LockApp(locker)
-    app.run()
+
+    try:
+        app.run()
+    except Exception:
+        locker.emergency_restore()
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
