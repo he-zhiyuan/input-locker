@@ -1,4 +1,4 @@
-Write-Host "=== 系统锁定工具 - 打包脚本 ===" -ForegroundColor Cyan
+Write-Host "=== Input Locker - Build Script ===" -ForegroundColor Cyan
 Write-Host ""
 
 $pythonPath = $null
@@ -25,16 +25,16 @@ Write-Host "Installing PyInstaller..." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Building..." -ForegroundColor Yellow
 
-& $pythonPath -m PyInstaller --onefile --windowed --uac-admin --name="SystemLocker" main.pyw
+& $pythonPath -m PyInstaller --onefile --windowed --uac-admin --name="InputLocker" main.pyw
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "[OK] Build successful!" -ForegroundColor Green
     Write-Host ""
-    Write-Host "Output: $(Get-Location)\dist\SystemLocker.exe" -ForegroundColor Cyan
+    Write-Host "Output: $(Get-Location)\dist\InputLocker.exe" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Usage:" -ForegroundColor Yellow
-    Write-Host "  Right-click SystemLocker.exe -> Run as administrator" -ForegroundColor White
+    Write-Host "  Right-click InputLocker.exe -> Run as administrator" -ForegroundColor White
     Write-Host "  Default password: 123456" -ForegroundColor White
 } else {
     Write-Host ""

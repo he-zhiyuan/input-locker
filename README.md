@@ -1,6 +1,6 @@
-# system-locker
+# input-locker
 
-Windows 系统锁定工具。适用于笔记本电脑的展示/防误触场景，锁定后键盘、鼠标禁用，USB存储禁用，屏幕保持常亮，通过 CapsLock+密码解锁。
+Windows 输入设备锁定工具。适用于笔记本电脑的展示/防误触场景，锁定后键盘、鼠标禁用，USB存储禁用，屏幕保持常亮，通过 CapsLock+密码解锁。
 
 ## 功能
 
@@ -41,7 +41,7 @@ pythonw main.pyw
 .\build.ps1
 ```
 
-打包后右键 `dist\SystemLocker.exe` → 以管理员身份运行。
+打包后右键 `dist\InputLocker.exe` → 以管理员身份运行。
 
 ## 修改密码
 
@@ -52,7 +52,7 @@ pythonw main.pyw
 ## 项目结构
 
 ```
-system-locker/
+input-locker/
 ├── main.pyw          # 主程序（.pyw 无控制台窗口）
 ├── build.ps1         # PowerShell 打包脚本
 ├── requirements.txt  # Python 依赖

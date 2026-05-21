@@ -84,7 +84,7 @@ MOUSEHOOKPROC = ctypes.CFUNCTYPE(
 )
 
 
-class SystemLocker:
+class InputLocker:
     def __init__(self):
         self.kb_hook_handle = None
         self.mouse_hook_handle = None
@@ -602,7 +602,7 @@ def main():
             messagebox.showerror("错误", "需要管理员权限!\n\n请右键选择'以管理员身份运行'")
         sys.exit(0)
 
-    locker = SystemLocker()
+    locker = InputLocker()
     atexit.register(locker.emergency_restore)
     app = LockApp(locker)
 
