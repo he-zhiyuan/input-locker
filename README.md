@@ -1,5 +1,9 @@
 # 🔒 input-locker
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+> ⬇️ **[下载最新版 InputLocker.exe](https://github.com/he-zhiyuan/input-locker/releases/latest)**
+
 Windows 输入设备锁定工具。适用于笔记本电脑的展示/防误触场景，锁定后键盘、鼠标禁用，USB存储禁用，屏幕保持常亮，通过 CapsLock+密码解锁。
 
 ## ✨ 功能
